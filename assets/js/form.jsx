@@ -69,7 +69,12 @@ class Form extends React.Component {
             method: 'POST',
             body: formData
         }).then(response => response.json()).then(result => {
-            console.log(result);
+            if (result.success) {
+                this.setState({
+                    selectedUser: '', 
+                    selectedProduct: '', 
+                    quantity: ''});
+            }
         });   
     }
     
