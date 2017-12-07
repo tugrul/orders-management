@@ -42,13 +42,24 @@ class OrderController extends Controller
 
     /**
      * 
-     * @param Request $request
-     * @Route("/order/delete", name="order_delete", defaults={"format": "_json"}, methods={"POST"})
+     * @param string $orderId
+     * @Route("/order/delete/{orderId}", name="order_delete", defaults={"format": "_json"}, methods={"POST"})
      * @return JsonResponse
      */
-    public function deleteAction()
+    public function deleteAction($orderId)
     {
-        return new JsonResponse(['success' => false]);
+        $order = $this->getOrderRepository()
+                ->findOneById($orderId);
+        
+        if (empty($order)) {
+            return new JsonResponse(['success' => false]);
+        }
+
+        $em = $this->getDoctrine()->getManager();
+        $em->remove($order);
+        $em->flush();
+        
+        return new JsonResponse(['success' => true]);
     }
 
     /**

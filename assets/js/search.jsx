@@ -141,13 +141,11 @@ class SearchResultRow extends React.Component {
         
     }
 
-    deleteOrder() {
-        console.log('delete order', this.props.order.id);
-    }
+    
 
     
     getOrder() {
-        return fetch('/order/get/' + this.props.order.id).then(response => response.json());
+        return fetch('/order/get/' + this.state.order.id).then(response => response.json());
     }
     
     loadUsers() {
@@ -166,6 +164,16 @@ class SearchResultRow extends React.Component {
             this.setState({users, products, edit: true});
         });
 
+    }
+    
+    deleteOrder() {
+        fetch('/order/delete/' + this.state.order.id, {method: 'POST'})
+                .then(response => response.json())
+                .then(response => {
+                    if (response.success) {
+                        this.setState({order: null});
+                    }
+                });
     }
     
     saveOrder() {
@@ -252,6 +260,10 @@ class SearchResultRow extends React.Component {
 
     render() {
         var order = this.state.order;
+        
+        if (!order) {
+            return null;
+        }
         
         if (this.state.edit) {
             return <tr>
