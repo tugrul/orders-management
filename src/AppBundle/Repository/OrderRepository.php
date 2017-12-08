@@ -5,6 +5,8 @@ namespace AppBundle\Repository;
 use AppBundle\Entity\User;
 use AppBundle\Entity\Product;
 
+use AppBundle\Exception\OrderException;
+
 /**
  * OrderRepository
  *
@@ -21,8 +23,10 @@ class OrderRepository extends \Doctrine\ORM\EntityRepository
         if (!empty($range)) {
 
             switch ($range) {
+                case 1: break;
                 case 2: $dateStart = new \DateTime(); $dateStart->modify('-7 days'); break;
-                case 3: $dateStart = new \DateTime(); break;
+                case 3: $dateStart = new \DateTime(); $dateStart->setTime(0, 0, 0); break;
+                default: throw new OrderException('Invalid range id');
             }
         
             if (!empty($dateStart)) {
@@ -48,7 +52,7 @@ class OrderRepository extends \Doctrine\ORM\EntityRepository
                     $builder->expr()->in('o.product', $productQuery->getDQL())
                     ));
 
-            $builder->setParameter('term', $term);
+            $builder->setParameter('term', '%' . $term . '%');
         }
         
         return $builder->getQuery()->execute();

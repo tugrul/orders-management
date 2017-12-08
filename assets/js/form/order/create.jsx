@@ -1,13 +1,11 @@
 
 import React from 'react';
 
-class Form extends React.Component {
+class CreateOrderForm extends React.Component {
     
     constructor(props) {
         super(props);
-        this.state = {
-            users: [], 
-            products: [],
+        this.state = { 
             selectedUser: '',
             selectedProduct: '',
             quantity: ''
@@ -17,24 +15,6 @@ class Form extends React.Component {
         this.handleProductChange = this.handleProductChange.bind(this);
         this.handleQuantityChange = this.handleQuantityChange.bind(this);
         this.createOrder = this.createOrder.bind(this);
-    }
-    
-    loadUsers() {
-        return fetch('/user/list').then(response => response.json());
-    }
-    
-    loadProducts() {
-        return fetch('/product/list').then(response => response.json());
-    }
-    
-    componentDidMount() {
-        
-        Promise.all([this.loadUsers(), this.loadProducts()]).then((([users, products]) => {
-
-            this.setState({users, products});
-
-        }).bind(this));
-        
     }
     
     renderOptions(items) {
@@ -69,12 +49,19 @@ class Form extends React.Component {
             method: 'POST',
             body: formData
         }).then(response => response.json()).then(result => {
-            if (result.success) {
-                this.setState({
-                    selectedUser: '', 
-                    selectedProduct: '', 
-                    quantity: ''});
+            if (!result.success) {
+                this.props.addMessage(result.message, 'error');
+                return false;
             }
+
+            this.props.addMessage(result.message, 'success');
+
+            this.setState({
+                selectedUser: '', 
+                selectedProduct: '', 
+                quantity: ''});
+
+            this.props.refreshSearchResult();
         });   
     }
     
@@ -88,14 +75,14 @@ class Form extends React.Component {
                 <label htmlFor="select-user" className="col-sm-2 control-label">User</label>
                 <div className="col-sm-10">
                     <select value={this.state.selectedUser} required="required" onChange={this.handleUserChange}
-                    className="form-control" id="select-user">{ this.renderOptions(this.state.users) }</select>
+                    className="form-control" id="select-user">{ this.renderOptions(this.props.users) }</select>
                 </div>
             </div>
             <div className="form-group">
                 <label htmlFor="select-product" className="col-sm-2 control-label">Product</label>
                 <div className="col-sm-10">
                     <select value={this.state.selectedProduct} required="required" onChange={this.handleProductChange}
-                    className="form-control" id="select-product">{ this.renderOptions(this.state.products) }</select>
+                    className="form-control" id="select-product">{ this.renderOptions(this.props.products) }</select>
                 </div>
             </div>
             <div className="form-group">
@@ -118,4 +105,4 @@ class Form extends React.Component {
     }
 };
 
-export default Form;
+export default CreateOrderForm;

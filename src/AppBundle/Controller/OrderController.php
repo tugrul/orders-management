@@ -3,8 +3,6 @@
 namespace AppBundle\Controller;
 
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 
 use AppBundle\Exception\OrderException;
@@ -13,38 +11,48 @@ use AppBundle\Entity\User;
 use AppBundle\Entity\Product;
 use AppBundle\Entity\Order;
 
-class OrderController extends Controller
-{
-    /**
-     * 
-     * @param int $orderId
-     * @Route("/order/get/{orderId}", name="order_get", defaults={"format": "_json"}, requirements={"orderId": "\d+"})
-     * @return JsonResponse
-     */
-    public function getAction($orderId)
-    {
-        return new JsonResponse($this->getOrderRepository()
-                ->findOneById($orderId));
-    }
-    
+use AppBundle\Annotation\JsonResponse;
+
+class OrderController extends BaseController
+{   
     /**
      * 
      * @param Request $request
-     * @Route("/order/search", name="order_search", defaults={"format": "_json"})
-     * @return JsonResponse
+     * @Route("/order/search", name="order_search")
+     * @JsonResponse
+     * @return array
      */
     public function searchAction(Request $request)
     {
-        return new JsonResponse($this->getOrderRepository()
-                ->findAllBySearch($request->request->get('term'), 
-                $request->request->get('range')));
+        try {
+            
+            $orders = $this->getOrderRepository()
+                    ->findAllBySearch($request->request->get('term'), 
+                    $request->request->get('range'));
+
+        } catch (OrderException $ex) {
+            return ['success' => false,
+                'message' => $ex->getMessage()];
+        }
+
+        
+        
+        $result = ['success' => true, 
+            'orders' => $orders];
+        
+        if (count($orders) === 0) {
+            $result['message'] = 'There is no order by search criteria';
+        }
+        
+        return $result;
     }
 
     /**
      * 
      * @param string $orderId
-     * @Route("/order/delete/{orderId}", name="order_delete", defaults={"format": "_json"}, methods={"POST"})
-     * @return JsonResponse
+     * @Route("/order/delete/{orderId}", name="order_delete", methods={"POST"})
+     * @JsonResponse
+     * @return array
      */
     public function deleteAction($orderId)
     {
@@ -52,21 +60,24 @@ class OrderController extends Controller
                 ->findOneById($orderId);
         
         if (empty($order)) {
-            return new JsonResponse(['success' => false]);
+            return ['success' => false, 
+                'message' => 'Order not found'];
         }
 
         $em = $this->getDoctrine()->getManager();
         $em->remove($order);
         $em->flush();
         
-        return new JsonResponse(['success' => true]);
+        return ['success' => true,
+            'message' => 'Order removed successfully'];
     }
 
     /**
      * 
      * @param Request $request
-     * @Route("/order/create", name="order_create", defaults={"format": "_json"}, methods={"POST"})
-     * @return JsonResponse
+     * @Route("/order/create", name="order_create", methods={"POST"})
+     * @JsonResponse
+     * @return array
      */
     public function createAction(Request $request)
     {
@@ -77,48 +88,53 @@ class OrderController extends Controller
         try {
             $order = $this->prepareOrder(new Order(), $userId, $productId, $quantity);        
         } catch (OrderException $ex) {
-            return new JsonResponse(['success' => false, 
-                'message' => $ex->getMessage()]);
+            return ['success' => false, 
+                'message' => $ex->getMessage()];
         }
 
         $em = $this->getDoctrine()->getManager();
         $em->persist($order);
         $em->flush();
 
-        return new JsonResponse(['success' => true]);
+        return ['success' => true,
+            'message' => 'Order created successfully'];
     }
     
     /**
      * 
      * @param string $orderId
      * @param Request $request
-     * @Route("/order/save/{orderId}", name="order_save", defaults={"format": "_json"}, methods={"POST"}, requirements={"orderId": "\d+"})
-     * @return JsonResponse
+     * @Route("/order/save/{orderId}", name="order_save", methods={"POST"}, requirements={"orderId": "\d+"})
+     * @JsonResponse
+     * @return array
      */
     public function saveAction($orderId, Request $request)
     {
         $order = $this->getOrderRepository()->findOneById($orderId);
         
         if (empty($order)) {
-            return new JsonResponse(['success' => false, 'message' => 'Order not found']);
+            return ['success' => false, 
+                'message' => 'Order not found'];
         }
         
         $userId = $request->request->get('user-id');
         $productId = $request->request->get('product-id');
         $quantity = $request->request->get('quantity');
-
+        
         try {
             $order = $this->prepareOrder($order, $userId, $productId, $quantity);        
         } catch (OrderException $ex) {
-            return new JsonResponse(['success' => false, 
-                'message' => $ex->getMessage()]);
+            return ['success' => false, 
+                'message' => $ex->getMessage()];
         }
 
         $em = $this->getDoctrine()->getManager();
         $em->persist($order);
         $em->flush();
 
-        return new JsonResponse(['success' => true, 'order' => $order]);
+        return [
+            'success' => true, 
+            'message' => 'Order saved successfully'];
     }
 
     
@@ -136,7 +152,7 @@ class OrderController extends Controller
         if (empty($product)) {
             throw new OrderException('Product not found by id');
         }
-
+        
         $order->setUser($user);
         $order->setProduct($product);
         $order->setQuantity($quantity);
@@ -154,18 +170,5 @@ class OrderController extends Controller
         return $order;
     }
     
-    protected function getOrderRepository()
-    {
-        return $this->getDoctrine()->getRepository(Order::class);
-    }
-    
-    protected function getUserRepository()
-    {
-        return $this->getDoctrine()->getRepository(User::class);
-    }
-    
-    protected function getProductRepository()
-    {
-        return $this->getDoctrine()->getRepository(Product::class);
-    }
+   
 }
