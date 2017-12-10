@@ -3,6 +3,8 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+
 use AppBundle\Entity\User;
 use AppBundle\Entity\Product;
 
@@ -26,6 +28,7 @@ class Order implements \JsonSerializable
     /**
      * @var int
      *
+     * @Assert\NotBlank(message="User should not be empty")
      * @ORM\JoinColumn(name="user", referencedColumnName="id")
      * @ORM\ManyToOne(targetEntity="User", inversedBy="orders")
      */
@@ -34,6 +37,7 @@ class Order implements \JsonSerializable
     /**
      * @var int
      *
+     * @Assert\NotBlank(message="Product should not be empty")
      * @ORM\JoinColumn(name="product", referencedColumnName="id")
      * @ORM\ManyToOne(targetEntity="Product", inversedBy="orders")
      */
@@ -42,6 +46,7 @@ class Order implements \JsonSerializable
     /**
      * @var \DateTime
      *
+     * @Assert\NotBlank(message="Date should not be empty")
      * @ORM\Column(name="date", type="datetime")
      */
     private $date;
@@ -50,6 +55,8 @@ class Order implements \JsonSerializable
     /**
      *
      * @var int
+     * @Assert\NotBlank()
+     * @Assert\GreaterThan(0, message="Quantity should be greater than 0")
      * @ORM\Column(name="quantity", type="integer")
      */
     private $quantity;
@@ -57,6 +64,8 @@ class Order implements \JsonSerializable
     
     /**
      * @var float
+     * @Assert\NotBlank()
+     * @Assert\GreaterThan(0, message="Total price should be greater than 0")
      * @ORM\Column(name="total_price", type="decimal", precision=8, scale=2)
      */
     private $totalPrice;

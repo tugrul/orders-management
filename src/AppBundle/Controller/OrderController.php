@@ -4,6 +4,7 @@ namespace AppBundle\Controller;
 
 use Symfony\Component\HttpFoundation\Request;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 use AppBundle\Exception\OrderException;
 
@@ -75,11 +76,12 @@ class OrderController extends BaseController
     /**
      * 
      * @param Request $request
+     * @param ValidatorInterface $validator
      * @Route("/order/create", name="order_create", methods={"POST"})
      * @JsonResponse
      * @return array
      */
-    public function createAction(Request $request)
+    public function createAction(Request $request, ValidatorInterface $validator)
     {
         $userId = $request->request->get('user-id');
         $productId = $request->request->get('product-id');
@@ -92,6 +94,13 @@ class OrderController extends BaseController
                 'message' => $ex->getMessage()];
         }
 
+        $errors = $validator->validate($order);
+        
+        if (count($errors) > 0) {
+            return ['success' => false,
+                'message' => $this->getErrorMessageFromList($errors)];
+        }
+        
         $em = $this->getDoctrine()->getManager();
         $em->persist($order);
         $em->flush();
@@ -104,11 +113,13 @@ class OrderController extends BaseController
      * 
      * @param string $orderId
      * @param Request $request
+     * @param ValidatorInterface $validator
+     * 
      * @Route("/order/save/{orderId}", name="order_save", methods={"POST"}, requirements={"orderId": "\d+"})
      * @JsonResponse
      * @return array
      */
-    public function saveAction($orderId, Request $request)
+    public function saveAction($orderId, Request $request, ValidatorInterface $validator)
     {
         $order = $this->getOrderRepository()->findOneById($orderId);
         
@@ -128,6 +139,13 @@ class OrderController extends BaseController
                 'message' => $ex->getMessage()];
         }
 
+        $errors = $validator->validate($order);
+        
+        if (count($errors) > 0) {
+            return ['success' => false,
+                'message' => $this->getErrorMessageFromList($errors)];
+        }
+        
         $em = $this->getDoctrine()->getManager();
         $em->persist($order);
         $em->flush();
@@ -170,5 +188,14 @@ class OrderController extends BaseController
         return $order;
     }
     
-   
+    protected function getErrorMessageFromList($errors)
+    {
+        $errors = iterator_to_array($errors);
+        
+        $errors = array_map(function($error){
+            return $error->getMessage();
+        }, $errors);
+        
+        return implode(', ', $errors);
+    }
 }
