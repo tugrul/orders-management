@@ -29,6 +29,11 @@ services:
         public: true
         tags: ['controller.service_arguments']
 
+    AppBundle\EventListener\JsonResponseListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.controller }
+            - { name: kernel.event_listener, event: kernel.view }
+
     # add more services, or override services that need manual wiring
     # AppBundle\Service\ExampleService:
     #     arguments:

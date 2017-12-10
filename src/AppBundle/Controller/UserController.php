@@ -3,24 +3,25 @@
 namespace AppBundle\Controller;
 
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 
-use AppBundle\Entity\User;
+use AppBundle\Annotation\JsonResponse;
 
-class UserController extends Controller
+class UserController extends BaseController
 {
     /**
      * 
      * @param Request $request
-     * @Route("/user/list", name="user_list", defaults={"format": "_json"})
-     * @return JsonResponse
+     * @Route("/user/list", name="user_list")
+     * @JsonResponse
+     * @return array
      */
     public function listAction(Request $request)
     {
-        $repository = $this->getDoctrine()->getRepository(User::class);
-        return new JsonResponse($repository->findAll());
+        return [
+            'success' => true,
+            'items' => $this->getUserRepository()->findAll()
+        ];
     }
 
 }

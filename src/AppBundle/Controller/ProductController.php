@@ -3,24 +3,25 @@
 namespace AppBundle\Controller;
 
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 
-use AppBundle\Entity\Product;
+use AppBundle\Annotation\JsonResponse;
 
-class ProductController extends Controller
+class ProductController extends BaseController
 {
     /**
      * 
      * @param Request $request
-     * @Route("/product/list", name="product_list", defaults={"format": "_json"})
-     * @return JsonResponse
+     * @Route("/product/list", name="product_list")
+     * @JsonResponse
+     * @return array
      */
     public function listAction(Request $request)
     {
-        $repository = $this->getDoctrine()->getRepository(Product::class);
-        return new JsonResponse($repository->findAll());
+        return [
+            'success' => true,
+            'items' => $this->getProductRepository()->findAll()
+        ];
     }
 
 }
